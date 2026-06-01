@@ -13,4 +13,5 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            curl -s -o /dev/null -w "HTTP상태코드: %{http_code}\n" "http://www.moef.go.kr/cv/taxlaw/taxlawList.do?menuNo=8120200"
+            curl -sk -o /dev/null -w "금감원: %{http_code}\n" "https://fss.or.kr/fss/bbs/B0000133/list.do?menuNo=200443"
+            curl -sk -o /dev/null -w "회계기준원: %{http_code}\n" "https://www.kasb.or.kr/"
