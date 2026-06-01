@@ -6,15 +6,27 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
-      - name: EC2에서 파일 가져오기
-        uses: appleboy/scp-action@v0.1.7
+      - name: EC2에서 파일 압축 후 전송
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: "output/*.md"
-          target: "output/"
-          strip_components: 2
+          script: |
+            cd /home/ubuntu
+            tar -czf output_files.tar.gz output/*.md
+            base64 output_files.tar.gz > output_files.b64
+
+      - name: 파일 다운로드
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          scp -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/output_files.b64 .
+          base64 -d output_files.b64 > output_files.tar.gz
+          mkdir -p output
+          tar -xzf output_files.tar.gz -C output --strip-components=1
 
       - name: 아티팩트 업로드
         uses: actions/upload-artifact@v4
