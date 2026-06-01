@@ -14,3 +14,4 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             curl -sk -o /dev/null -w "조세심판원: %{http_code}\n" "https://www.tt.go.kr/"
+            ls -la /home/ubuntu/output/
