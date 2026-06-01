@@ -1,0 +1,16 @@
+name: 기재부 접속 테스트
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 기재부 접속 테스트
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            curl -sk -o /dev/null -w "HTTP상태코드: %{http_code}\n" "https://www.moef.go.kr/cv/taxlaw/taxlawList.do?menuNo=8120200"
