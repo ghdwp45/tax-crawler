@@ -107,6 +107,10 @@ for idx, tax_name in enumerate(TAX_CATEGORIES, 1):
 
             except Exception as e:
                 print(f"    ❌ 에러: {e}")
+                try:
+                    print(f"    응답내용: {res.text[:200]}")
+                except:
+                    pass
                 break
 
 print("✅ 국세청 완료\n")
