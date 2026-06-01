@@ -14,19 +14,15 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 라이브러리 설치
-        run: pip install requests
-
-      - name: EC2에 파이썬 설치
+      - name: EC2에 패키지 설치
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            sudo apt-get update -y
-            sudo apt-get install -y python3 python3-pip
-            pip3 install requests --break-system-packages
+            sudo apt-get install -y python3-pip python3-bs4 -q
+            pip3 install requests beautifulsoup4 --break-system-packages
 
       - name: 크롤러 EC2로 전송
         uses: appleboy/scp-action@v0.1.7
@@ -34,7 +30,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: "crawler.py"
+          source: "kasb_crawler.py"
           target: "/home/ubuntu/"
 
       - name: EC2에서 크롤러 실행
@@ -43,33 +39,25 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          envs: NTS_COOKIE
+          command_timeout: 60m
           script: |
-            export NTS_COOKIE="${{ secrets.NTS_COOKIE }}"
             cd /home/ubuntu
-            python3 crawler.py
+            mkdir -p output
+            python3 kasb_crawler.py
 
-      - name: 결과물 다운로드
-        uses: appleboy/ssh-action@v1.0.3
+      - name: 결과물 EC2에서 가져오기
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          script: |
-            ls /home/ubuntu/output/
+          source: "/home/ubuntu/output/*.md"
+          target: "output/"
+          strip_components: 3
 
       - name: 아티팩트 업로드
         uses: actions/upload-artifact@v4
         with:
-          name: 세법해석례_최종본
+          name: 회계기준원_질의회신_최종본
           path: output/
           retention-days: 7
-      - name: 기재부 접속 테스트
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            curl -s -o /dev/null -w "HTTP상태코드: %{http_code}\n" "https://www.moef.go.kr/cv/taxlaw/taxlawList.do?menuNo=8120200"
-          
